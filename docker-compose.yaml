@@ -1,0 +1,180 @@
+---
+version: "2"
+services:
+  # Guacamole services for Robust Backdoor access
+  guac:
+    image: db260179/guacamole-combined
+    restart: always
+    volumes:
+      - ${GUAC_DATA}:/app/data:rw
+    ports:
+      - "8080:80"
+    networks:
+      sandbox:
+    hostname: guac
+
+  # Simple website to host files for easy download of config files
+  cloud-drive:
+    image: mayankt/config-drive
+    restart: always
+    volumes:
+      - ${CLOUD_DRIVE}:/www:rw
+    ports:
+      - "8081:80"
+    networks:
+      sandbox:
+    hostname: config-drive
+
+  # Docker-in-Docker environment for Sandbox
+  sandbox:
+    image: mayankt/backdoor:sandbox
+    restart: always
+    privileged: true
+    ports:
+      - "9000-9010:9000-9010/tcp"
+      - "222:22/tcp"
+    volumes:
+      - ${DATA_DIR}:/data
+      - ${KUBE_CONFIG}:/kube/config
+    dns: 8.8.8.8
+    networks:
+      sandbox:
+        ipv4_address: "192.168.13.100"
+
+# WebServer-A
+  webserver-a:
+    image: "mayankt/webserver:a"
+    restart: always
+    networks:
+      sandbox:
+        ipv4_address: "192.168.13.11"
+    hostname: webserver-a
+
+# WebServer-B
+  webserver-b:
+    image: "mayankt/webserver:b"
+    restart: always
+    networks:
+      sandbox:
+        ipv4_address: "192.168.13.12"
+    hostname: webserver-b
+
+# NetScalet CPX
+  cpx:
+    image: "store/citrix/netscalercpx:12.0-41.16"
+    environment:
+      EULA: "yes"
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    ulimits:
+      core: -1
+    networks:
+      sandbox:
+        ipv4_address: "192.168.13.20"
+    ports:
+      - "10000-10050:10000-10050"
+      - "9080:80"
+    hostname: ns-adc
+
+# IDE Environment 
+  nitro-ide:
+    image: "mayankt/nitro-ide"
+    restart: always
+    dns: 8.8.8.8
+    networks:
+      sandbox:
+        ipv4_address: "192.168.13.10"
+    ports:
+      - "9090:80"
+      - "9091:8000"
+   volumes:
+       - ${DATA_DIR}:/workspace:rw      
+    hostname: nitro-ide
+
+# Local GIT Service 
+  git: 
+    networks:
+      - nginxProxy
+    image: "gogs/gogs"
+    restart: always
+    volumes: 
+      - "${GIT_DATA}:/data"
+    ports:
+      - "2222:22"
+      - "9092:3000"
+    networks:
+      sandbox:
+
+# Latest Rancher Server 
+  rancher-server:
+    image: rancher/server:preview
+    container_name: rancher-ui
+    restart: always
+    volumes_from:
+      - mysql
+    ports:
+      - "8082:8080"
+    links:
+      - mysql
+    environment:
+      - CATTLE_DB_CATTLE_MYSQL_HOST=mysql
+      - CATTLE_DB_CATTLE_MYSQL_PORT=3306
+      - CATTLE_DB_CATTLE_MYSQL_NAME=rancher
+      - CATTLE_DB_CATTLE_USERNAME=rancher
+      - CATTLE_DB_CATTLE_PASSWORD=Password1
+    networks:
+      sandbox:
+  
+  mysql:
+    image: mysql
+    container_name: rancher-db
+    restart: always
+    volumes_from:
+        - mysqldata
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=Password1
+      - MYSQL_DATABASE=rancher
+      - MYSQL_USER=rancher
+      - MYSQL_PASSWORD=Password1
+    networks:
+      sandbox:
+  
+  mysqldata:
+    container_name : mysqldata
+    image: gliderlabs/alpine
+    volumes:
+      - /data/rancher-sql:/var/lib/mysql
+    command: /bin/sh
+    networks:
+      sandbox:
+
+# Local Docker Registry
+  registryweb:
+    depends_on:
+      - registry
+    networks:
+      sandbox:
+    image: "hyper/docker-registry-web"
+    restart: always
+    ports:
+      - "8083:8080"
+  registry:
+    image: "registry:2"
+    restart: always
+    networks:
+      sandbox:
+    ports:
+      - 5000:5000
+    volumes:
+      - "${REGISTRY_DATA}:/var/lib/registry"
+
+networks:
+  # defined sandbox network for docker containers
+  sandbox:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "192.168.13.0/24"
