@@ -48,7 +48,7 @@ services:
 
   # Docker-in-Docker environment for Sandbox
   sandbox:
-    image: mayankt/backdoor:backdoor
+    image: mayankt/backdoor:dind
     restart: always
     privileged: true
     environment: 
