@@ -27,7 +27,7 @@ services:
 
   # Docker-in-Docker environment for Sandbox
   sandbox:
-    image: mayankt/backdoor:sandbox
+    image: mayankt/backdoor:backdoor
     restart: always
     privileged: true
     ports:
@@ -88,7 +88,7 @@ services:
     ports:
       - "9090:80"
       - "9091:8000"
-   volumes:
+    volumes:
        - ${DATA_DIR}:/workspace:rw      
     hostname: nitro-ide
 
@@ -125,7 +125,7 @@ services:
       - CATTLE_DB_CATTLE_PASSWORD=Password1
     networks:
       sandbox:
-  
+
   mysql:
     image: mysql
     container_name: rancher-db

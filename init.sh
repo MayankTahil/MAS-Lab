@@ -1,7 +1,7 @@
 # Persistent Data Directories
-export ROOT_DIR="/MAS-LAB"
+export ROOT_DIR="/MAS-Lab"
 export DATA_DIR="$ROOT_DIR/Data"
-export CLOUD_DRIVE="$ROOT_DIR/MAS-LAB"
+export CLOUD_DRIVE="$ROOT_DIR/Cloud-data"
 export GUAC_DATA="$ROOT_DIR/Guac-data"
 export GIT_DATA="$ROOT_DIR/Git-data"
 export RANCHER_DATA="$ROOT_DIR/Rancher-data"
@@ -28,13 +28,21 @@ if hash docker 2>/dev/null; then
 		echo "Docker already installed. Skipping script"
     else
         echo "Installing Docker"
-        source <(curl -s -k https://raw.githubusercontent.com/Citrix-TechSpecialist/scripts/master/install-docker.sh) 
+        curl -s -k https://raw.githubusercontent.com/Citrix-TechSpecialist/scripts/master/install-docker.sh | bash
     fi
 
 # Remove all containers, images, and clean up host
 docker rm -f $(docker ps -aq)
 docker rmi -f $(docker images)
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v /etc:/etc:ro spotify/docker-gc
+
+# Add insecure registry
+echo '{
+"insecure-registries":["registry.workspacelab.com:5000"],
+"experimental": true
+}' > /etc/docker/daemon.json
+
+service docker restart 
 
 # Initiate Services Stack
 docker-compose up -d 
