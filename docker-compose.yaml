@@ -12,7 +12,6 @@ services:
     restart: always
     volumes: 
       - /var/run/docker.sock:/tmp/docker.sock
-      - ./conf/global.conf:/etc/nginx/conf.d/global.conf:ro
     networks:
       sandbox:
 
