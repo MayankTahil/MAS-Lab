@@ -86,7 +86,9 @@ services:
   cpx:
     image: "store/citrix/netscalercpx:12.0-53.16"
     environment:
-      EULA: "yes"
+      - VIRTUAL_HOST=cpx.workspacelab.com
+      - VIRTUAL_PORT=10000
+      - EULA=yes
     restart: always
     cap_add:
       - NET_ADMIN
@@ -105,9 +107,10 @@ services:
     image: "mayankt/nitro-ide"
     restart: always
     environment:
+      - PROXY_LOCATION=nitro-ide
       - VIRTUAL_HOST=ide.workspacelab.com
       - VIRTUAL_PORT=9090
-    dns: 8.8.8.8
+    dns: 192.168.10.11
     networks:
       sandbox:
         ipv4_address: "192.168.13.10"
@@ -123,9 +126,6 @@ services:
     image: "gogs/gogs"
     restart: always
     environment:
-      - VIRTUAL_HOST=git.workspacelab.com
-      - VIRTUAL_PORT=9092
-    environment: 
       - PROXY_LOCATION=git
       - VIRTUAL_HOST=git.workspacelab.com
       - VIRTUAL_PORT=9092
@@ -143,6 +143,7 @@ services:
     container_name: rancher-ui
     restart: always
     environment:
+      - PROXY_LOCATION=rancher-server
       - VIRTUAL_HOST=rancher.workspacelab.com
       - VIRTUAL_PORT=8082
     volumes_from:
