@@ -202,6 +202,9 @@ services:
   registry:
     image: "registry:2"
     restart: always
+    environment:
+      - VIRTUAL_HOST=registry.workspacelab.com
+      - VIRTUAL_PORT=5000
     networks:
       sandbox:
     ports:
