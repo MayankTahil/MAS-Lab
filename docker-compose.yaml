@@ -84,7 +84,7 @@ services:
 
 # NetScalet CPX
   cpx:
-    image: "store/citrix/netscalercpx:12.0-53.16"
+    image: "registry.americasreadiness.com/cpx:12.0-53.16"
     environment:
       - VIRTUAL_HOST=cpx.workspacelab.com
       - VIRTUAL_PORT=10000
